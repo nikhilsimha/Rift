@@ -11,9 +11,17 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/BuildFlatBuffers.cmake)
 set(SCHEMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/schema)
 file(GLOB_RECURSE SCHEMAS ${SCHEMA_DIR}/**.fbs)
 
+
 set(GEN_FBS_DIR ${GEN_DIR}/fbs)
 add_executable(flatc IMPORTED GLOBAL)
-set_property(TARGET flatc PROPERTY IMPORTED_LOCATION "/usr/local/bin/flatc")
+set_target_properties(
+    flatc 
+    PROPERTIES 
+        IMPORTED_LOCATION /usr/local/bin/flatc        
+)
+
+set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS --grpc --cpp)
+
 build_flatbuffers("${SCHEMAS}"
                   "${SCHEMA_DIR}"
                   build_fbs
@@ -24,17 +32,23 @@ build_flatbuffers("${SCHEMAS}"
 
 # dockerize the build environment to make it work on aws
 ############################# DEPENDENCY SETUP ################################
-set (PROJECT_LINK_LIBS librocksdb.a libzmq.a libflatbuffers.a)
+set (PROJECT_DEPS_DIR /usr/local/Cellar)
+set (PROJECT_LINK_LIBS librocksdb.a libzmq.a libflatbuffers.a libgrpc.a libgrpc++.a)
 
 link_directories(
-    /usr/local/Cellar/rocksdb/5.11.3/lib/ 
-    /usr/local/Cellar/zeromq/4.2.5/lib/ 
-    /usr/local/Cellar/flatbuffers/1.8.0/lib/)  
+    ${PROJECT_DEPS_DIR}/rocksdb/5.11.3/lib/ 
+    ${PROJECT_DEPS_DIR}/zeromq/4.2.5/lib/ 
+    ${PROJECT_DEPS_DIR}/flatbuffers/1.9.0/lib/
+    ${PROJECT_DEPS_DIR}/grpc/1.10.1/lib/
+    /usr/local/lib
+)  
 
 include_directories(
-    /usr/local/Cellar/rocksdb/5.11.3/include/ 
-    /usr/local/Cellar/zeromq/4.2.5/include/ 
-    /usr/local/Cellar/flatbuffers/1.8.0/include/
+    ${PROJECT_DEPS_DIR}/rocksdb/5.11.3/include/ 
+    ${PROJECT_DEPS_DIR}/zeromq/4.2.5/include/ 
+    ${PROJECT_DEPS_DIR}/flatbuffers/1.9.0/include/
+    ${PROJECT_DEPS_DIR}/grpc/1.10.1/include/
+    /usr/local/include    
     ${GEN_DIR}/)
 
 
